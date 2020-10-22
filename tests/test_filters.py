@@ -431,9 +431,14 @@ class OrderingFilterRelatedModel(models.Model):
 
 
 class OrderingFilterSerializer(serializers.ModelSerializer):
+    description = serializers.SerializerMethodField()
+
     class Meta:
         model = OrderingFilterModel
         fields = '__all__'
+
+    def get_description(self, instance):
+        return instance.title + ": " + instance.text
 
 
 class OrderingDottedRelatedSerializer(serializers.ModelSerializer):
@@ -544,6 +549,16 @@ class OrderingFilterTests(TestCase):
 
         view = OrderingListView.as_view()
         request = factory.get('/', {'ordering': 'foobar'})
+        response = view(request)
+        assert response.data == [
+            {'id': 3, 'title': 'xwv', 'text': 'cde'},
+            {'id': 2, 'title': 'yxw', 'text': 'bcd'},
+            {'id': 1, 'title': 'zyx', 'text': 'abc'},
+        ]
+
+        # Method fields of serializers are ignored.
+        view = OrderingListView.as_view()
+        request = factory.get('/', {'ordering': 'description'})
         response = view(request)
         assert response.data == [
             {'id': 3, 'title': 'xwv', 'text': 'cde'},
